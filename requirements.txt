@@ -1,4 +1,4 @@
 streamlit
 textblob
-genai
+google-genai
 python-dotenv
