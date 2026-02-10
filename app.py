@@ -20,7 +20,7 @@ model = genai.GenerativeModel(
 )
 
 # --- 3. UTILITIES ---
-CRISIS_KEYWORDS = ["suicide", "kill myself", "end my life", "hurt myself", "self-harm"]
+#CRISIS_KEYWORDS = ["suicide", "kill myself", "end my life", "hurt myself", "self-harm"]
 
 def check_for_crisis(text):
     return any(keyword in text.lower() for keyword in CRISIS_KEYWORDS)
