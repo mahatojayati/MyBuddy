@@ -1,20 +1,41 @@
 import streamlit as st
 from textblob import TextBlob
-from langchain_openai import ChatOpenAI
-from langchain.schema import SystemMessage, HumanMessage
+import google.generativeai as genai
+
+# 1. Setup Gemini
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+
+# Use 'gemini-1.5-flash' for speed/cost or 'pro' for deeper empathy
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    system_instruction="You are a supportive student peer. Use a calming, empathetic tone. Keep responses short. If the user is in crisis, provide resources immediately."
+)
+
+# 2. Safety Settings (The CSE 'Guardrail' approach)
+safety_settings = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_LOW_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_LOW_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_LOW_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_LOW_AND_ABOVE"},
+]
+
+# 3. Chat Logic
+if prompt := st.chat_input("What's on your mind?"):
+    st.chat_message("user").write(prompt)
+    
+    # Start or continue a chat session with history
+    chat = model.start_chat(history=[])
+    
+    try:
+        response = chat.send_message(prompt, safety_settings=safety_settings)
+        st.chat_message("assistant").write(response.text)
+    except Exception as e:
+        st.error("I'm sorry, I can't discuss this topic. Please reach out to a professional if you're feeling distressed.")
 
 # --- CONFIGURATION & UI ---
 st.set_page_config(page_title="Student Companion", page_icon="🌱")
 st.title("🌱 Student Mental Health Companion")
 st.caption("A safe space to talk, breathe, and find balance.")
-
-# Initialize LLM (Replace with your API Key/Endpoint)
-# If using Streamlit Cloud, add 'GROQ_API_KEY' to your Secrets
-llm = ChatOpenAI(
-    openai_api_base="https://api.groq.com/openai/v1", 
-    openai_api_key=st.secrets["GROQ_API_KEY"], 
-    model_name="llama-3.3-70b-versatile"
-)
 
 # --- SESSION STATE ---
 if "messages" not in st.session_state:
@@ -58,14 +79,6 @@ if prompt := st.chat_input("How are you feeling today?"):
         response_prefix = "It sounds like things are a bit heavy lately. "
     else:
         response_prefix = ""
-
-    # 3. Generate AI Response
-    with st.chat_message("assistant"):
-        # System instructions to keep the bot empathetic and student-focused
-        messages = [
-            SystemMessage(content="You are a compassionate, non-clinical student peer. Use supportive language. Keep responses under 3 sentences. Do not give medical advice."),
-            HumanMessage(content=f"User's current sentiment score is {score}. User says: {prompt}")
-        ]
         
         response = llm.invoke(messages)
         full_response = f"{response_prefix}{response.content}"
