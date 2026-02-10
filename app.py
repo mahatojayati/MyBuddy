@@ -3,7 +3,7 @@ from textblob import TextBlob
 import google.generativeai as genai
 
 # 1. Setup Gemini
-genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+genai.configure(api_key=st.secrets["AIzaSyAqJrR0Z97bYvpEIGbaaEI3Tnh7_csZ07w"])
 
 # Use 'gemini-1.5-flash' for speed/cost or 'pro' for deeper empathy
 model = genai.GenerativeModel(
