@@ -9,9 +9,16 @@ except Exception:
     st.error("Missing GENAI_API_KEY in Streamlit Secrets.")
 
 # Initialize Model once - FIX FOR THE 404 ERROR
+# Initialize Model once with a proper persona
 model = genai.GenerativeModel(
-    model_name="gemini-2.5-flash", 
-    system_instruction="You are a supportive student peer. Use a calming tone. Keep it brief."
+    model_name="gemini-2.5-flash",
+    system_instruction=(
+        "You are MyBuddy, an empathetic, conversational mental health companion for university students. "
+        "Do not sound like a clinical therapist or a robot. Speak like a caring, emotionally intelligent friend. "
+        "Use natural phrasing, occasional conversational fillers, and warm language. "
+        "Reflect the user's emotions back to them to show understanding. "
+        "Never give medical diagnoses. Keep responses concise (2-3 sentences max) to encourage back-and-forth dialogue."
+    )
 )
 
 # --- CORE LOGIC FUNCTIONS ---
@@ -23,27 +30,30 @@ def get_sentiment_prefix(text):
         return "It sounds like things are a bit heavy lately. "
     return ""
 
-# --- CHAT INTERFACE ---
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# Display history
-for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
-
 # Single Chat Input
 if prompt := st.chat_input("How are you feeling today?"):
+    
+    # 1. TRANSLATE HISTORY FOR GEMINI
+    # We do this BEFORE appending the new prompt so we don't send it twice
+    gemini_history = []
+    for msg in st.session_state.messages:
+        # Map Streamlit's "assistant" to Gemini's "model"
+        role = "user" if msg["role"] == "user" else "model"
+        gemini_history.append({"role": role, "parts": [msg["content"]]})
+
+    # 2. UPDATE STREAMLIT UI WITH NEW PROMPT
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
 
+    # 3. GENERATE RESPONSE
     with st.chat_message("assistant"):
         try:
             prefix = get_sentiment_prefix(prompt)
-            chat = model.start_chat(history=[]) 
+            
+            # Pass the translated history to the model! No more history=[]
+            chat = model.start_chat(history=gemini_history) 
             response = chat.send_message(prompt)
             
-            # FIX FOR THE EXCEPTION CRASH 
-            # If safety filters block the prompt, response.text doesn't exist.
             if response.candidates and response.candidates[0].content.parts:
                 full_response = f"{prefix}{response.text}"
                 st.write(full_response)
