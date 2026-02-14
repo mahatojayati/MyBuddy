@@ -8,8 +8,7 @@ try:
 except Exception:
     st.error("Missing GENAI_API_KEY in Streamlit Secrets.")
 
-# Initialize Model once - FIX FOR THE 404 ERROR
-# Initialize Model once with a proper persona
+# --- MODEL INITIALIZATION ---
 model = genai.GenerativeModel(
     model_name="gemini-2.5-flash",
     system_instruction=(
@@ -30,18 +29,25 @@ def get_sentiment_prefix(text):
         return "It sounds like things are a bit heavy lately. "
     return ""
 
-# Single Chat Input
+# --- STATE MANAGEMENT ---
+# THIS IS THE PART YOU DELETED. IT MUST BE ABOVE THE CHAT DISPLAY.
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display history
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["content"])
+
+# --- CHAT INTERFACE ---
 if prompt := st.chat_input("How are you feeling today?"):
     
     # 1. TRANSLATE HISTORY FOR GEMINI
-    # We do this BEFORE appending the new prompt so we don't send it twice
     gemini_history = []
     for msg in st.session_state.messages:
-        # Map Streamlit's "assistant" to Gemini's "model"
         role = "user" if msg["role"] == "user" else "model"
         gemini_history.append({"role": role, "parts": [msg["content"]]})
 
-    # 2. UPDATE STREAMLIT UI WITH NEW PROMPT
+    # 2. UPDATE STREAMLIT UI
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
 
@@ -49,8 +55,6 @@ if prompt := st.chat_input("How are you feeling today?"):
     with st.chat_message("assistant"):
         try:
             prefix = get_sentiment_prefix(prompt)
-            
-            # Pass the translated history to the model! No more history=[]
             chat = model.start_chat(history=gemini_history) 
             response = chat.send_message(prompt)
             
