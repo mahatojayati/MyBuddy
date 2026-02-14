@@ -12,7 +12,7 @@ except Exception:
 # Initialize Model once
 model = genai.GenerativeModel(
     model_name="models/gemini-1.5-flash",
-
+)
 
 # --- CORE LOGIC FUNCTIONS ---
 def get_sentiment_prefix(text):
@@ -57,4 +57,4 @@ if prompt := st.chat_input("How are you feeling today?"):
             # CRITICAL: This shows you the ACTUAL error in the UI so you can fix it
             st.error(f"API Error: {e}") 
             st.info("Please check your API quota or safety filters.")
-            )
+            
