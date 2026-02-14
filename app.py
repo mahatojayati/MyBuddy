@@ -10,7 +10,7 @@ except Exception:
 
 # Initialize Model once - FIX FOR THE 404 ERROR
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash-latest", 
+    model_name="gemini-2.5-flash", 
     system_instruction="You are a supportive student peer. Use a calming tone. Keep it brief."
 )
 
