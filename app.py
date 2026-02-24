@@ -33,6 +33,8 @@ def get_sentiment_prefix(text):
 # THIS IS THE PART YOU DELETED. IT MUST BE ABOVE THE CHAT DISPLAY.
 if "messages" not in st.session_state:
     st.session_state.messages = []
+    #title heading
+st.title("MyBuddy - AI Companion.")
 
 # Display history
 for msg in st.session_state.messages:
